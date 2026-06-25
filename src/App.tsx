@@ -4,11 +4,16 @@ import Sidebar, { type NavKey } from "./components/sidebar/Sidebar";
 import NewChatView from "./pages/NewChatView";
 import ChatsView from "./pages/ChatsView";
 import ProjectsView from "./pages/ProjectsView";
+import ProjectDetailView from "./ProjectDetailView";
+import ChatThreadView from "./ChatThreadView";
+import PromptBuilderView from "./PromptBuilderView";
 
 const PLACEHOLDER_LABEL: Record<string, string> = {
   artifacts: "Artifacts",
   "knowledge-base": "Knowledge Base",
   compare: "Compare",
+  "plugin-marketplace": "Plugin Marketplace",
+  agents: "Agents",
   settings: "Settings",
 };
 
@@ -23,15 +28,48 @@ function PlaceholderView({ label }: { label: string }) {
 
 export default function App() {
   const [active, setActive] = useState<NavKey>("new-chat");
+  const [openChatId, setOpenChatId] = useState<string | null>(null);
+  const [openProjectId, setOpenProjectId] = useState<string | null>(null);
+
+  const navigate = (key: NavKey) => {
+    setOpenChatId(null);
+    setOpenProjectId(null);
+    setActive(key);
+  };
+
+  const openChat = (chatId: string) => {
+    setOpenProjectId(null);
+    setOpenChatId(chatId);
+  };
+
+  const openProject = (projectId: string) => {
+    setOpenChatId(null);
+    setOpenProjectId(projectId);
+  };
 
   const renderView = () => {
+    if (openChatId) {
+      return <ChatThreadView chatId={openChatId} onBack={() => setOpenChatId(null)} />;
+    }
+    if (openProjectId) {
+      return (
+        <ProjectDetailView
+          projectId={openProjectId}
+          onBack={() => setOpenProjectId(null)}
+          onOpenChat={openChat}
+        />
+      );
+    }
+
     switch (active) {
       case "new-chat":
         return <NewChatView />;
       case "chats":
-        return <ChatsView />;
+        return <ChatsView onOpenChat={openChat} />;
       case "projects":
-        return <ProjectsView />;
+        return <ProjectsView onOpenProject={openProject} />;
+      case "prompt-builder":
+        return <PromptBuilderView />;
       default:
         return <PlaceholderView label={PLACEHOLDER_LABEL[active] ?? "This section"} />;
     }
@@ -39,7 +77,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-[#0b0712] font-sans">
-      <Sidebar active={active} onNavigate={setActive} />
+      <Sidebar active={active} activeChatId={openChatId} onNavigate={navigate} onOpenChat={openChat} />
       <main className="flex-1 overflow-hidden">{renderView()}</main>
     </div>
   );

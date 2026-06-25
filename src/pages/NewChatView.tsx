@@ -28,21 +28,12 @@ export default function NewChatView() {
         <div className="absolute right-10 bottom-10 h-72 w-72 rounded-full bg-fuchsia-600/10 blur-[100px]" />
       </div>
 
-      {/* top bar */}
+      {/* top bar — model switcher only; Configuration / Export removed */}
       <div className="relative z-10 flex items-center justify-between px-8 pt-6">
         <button className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[13px] text-white/70 transition hover:bg-white/[0.07]">
           Nexus AI v6.0
           <span className="text-white/40">⌄</span>
         </button>
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1.5 text-[13px] text-white/70 transition hover:bg-white/[0.07]">
-            <SlidersHorizontal size={14} />
-            Configuration
-          </button>
-          <button className="flex items-center gap-1.5 rounded-full bg-white/90 px-3.5 py-1.5 text-[13px] font-medium text-[#150a24] transition hover:bg-white">
-            Export
-          </button>
-        </div>
       </div>
 
       {/* centered hero + composer */}

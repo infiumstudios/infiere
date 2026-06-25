@@ -1,6 +1,7 @@
-import { Plus, FolderKanban, MoreHorizontal, Clock } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Plus, FolderKanban, MoreHorizontal, Clock, Search } from "lucide-react";
 
-interface Project {
+export interface Project {
   id: string;
   name: string;
   description: string;
@@ -9,7 +10,7 @@ interface Project {
   accent: string;
 }
 
-const PROJECTS: Project[] = [
+export const PROJECTS: Project[] = [
   {
     id: "1",
     name: "Image",
@@ -44,59 +45,88 @@ const PROJECTS: Project[] = [
   },
 ];
 
-export default function ProjectsView() {
+interface ProjectsViewProps {
+  onOpenProject: (projectId: string) => void;
+}
+
+export default function ProjectsView({ onOpenProject }: ProjectsViewProps) {
+  const [query, setQuery] = useState("");
+
+  const filtered = useMemo(
+    () =>
+      PROJECTS.filter(
+        (p) =>
+          p.name.toLowerCase().includes(query.toLowerCase()) ||
+          p.description.toLowerCase().includes(query.toLowerCase())
+      ),
+    [query]
+  );
+
   return (
     <div className="flex h-full flex-1 flex-col bg-[#150a24]">
-      {/* header */}
       <div className="flex items-center justify-between border-b border-white/[0.06] px-8 py-5">
         <h1 className="font-serif text-[22px] text-white/90">Projects</h1>
-        <button className="flex items-center gap-1.5 rounded-full bg-violet-600 px-4 py-2 text-[13px] font-medium text-white shadow-[0_0_16px_rgba(124,58,237,0.5)] transition hover:bg-violet-500">
-          <Plus size={15} />
-          New project
-        </button>
-      </div>
-
-      {/* grid */}
-      <div className="flex-1 overflow-y-auto px-8 py-6">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {PROJECTS.map((project) => (
-            <button
-              key={project.id}
-              className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-left transition hover:border-violet-400/30 hover:bg-white/[0.05]"
-            >
-              <div
-                className={`absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gradient-to-br ${project.accent} blur-2xl`}
-              />
-              <div className="relative z-10 flex items-start justify-between">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/15 text-violet-300">
-                  <FolderKanban size={16} />
-                </div>
-                <span className="rounded-md p-1 text-white/0 transition group-hover:text-white/50 hover:bg-white/[0.07]">
-                  <MoreHorizontal size={15} />
-                </span>
-              </div>
-              <h3 className="relative z-10 mt-3 truncate text-[15px] font-medium text-white/90">
-                {project.name}
-              </h3>
-              <p className="relative z-10 mt-1 line-clamp-2 text-[12.5px] leading-relaxed text-white/45">
-                {project.description}
-              </p>
-              <div className="relative z-10 mt-4 flex items-center gap-3 text-[12px] text-white/35">
-                <span>{project.chatCount} chats</span>
-                <span className="flex items-center gap-1">
-                  <Clock size={11} />
-                  {project.updated}
-                </span>
-              </div>
-            </button>
-          ))}
-
-          {/* add-new tile */}
-          <button className="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/[0.12] text-white/35 transition hover:border-violet-400/30 hover:text-white/70">
-            <Plus size={20} />
-            <span className="text-[13px]">Create a project</span>
+        <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-2 text-[13px] text-white/45">
+            <Search size={14} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search projects…"
+              className="w-48 bg-transparent text-white/80 placeholder:text-white/35 focus:outline-none"
+            />
+          </div>
+          <button className="flex items-center gap-1.5 rounded-full bg-violet-600 px-4 py-2 text-[13px] font-medium text-white shadow-[0_0_16px_rgba(124,58,237,0.5)] transition hover:bg-violet-500">
+            <Plus size={15} />
+            New project
           </button>
         </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-8 py-6">
+        {filtered.length === 0 ? (
+          <p className="mt-12 text-center text-[13.5px] text-white/35">No projects match "{query}".</p>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((project) => (
+              <button
+                key={project.id}
+                onClick={() => onOpenProject(project.id)}
+                className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] p-5 text-left transition hover:border-violet-400/30 hover:bg-white/[0.05]"
+              >
+                <div
+                  className={`absolute -right-8 -top-8 h-28 w-28 rounded-full bg-gradient-to-br ${project.accent} blur-2xl`}
+                />
+                <div className="relative z-10 flex items-start justify-between">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/15 text-violet-300">
+                    <FolderKanban size={16} />
+                  </div>
+                  <span className="rounded-md p-1 text-white/0 transition group-hover:text-white/50 hover:bg-white/[0.07]">
+                    <MoreHorizontal size={15} />
+                  </span>
+                </div>
+                <h3 className="relative z-10 mt-3 truncate text-[15px] font-medium text-white/90">
+                  {project.name}
+                </h3>
+                <p className="relative z-10 mt-1 line-clamp-2 text-[12.5px] leading-relaxed text-white/45">
+                  {project.description}
+                </p>
+                <div className="relative z-10 mt-4 flex items-center gap-3 text-[12px] text-white/35">
+                  <span>{project.chatCount} chats</span>
+                  <span className="flex items-center gap-1">
+                    <Clock size={11} />
+                    {project.updated}
+                  </span>
+                </div>
+              </button>
+            ))}
+
+            <button className="flex min-h-[160px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/[0.12] text-white/35 transition hover:border-violet-400/30 hover:text-white/70">
+              <Plus size={20} />
+              <span className="text-[13px]">Create a project</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
