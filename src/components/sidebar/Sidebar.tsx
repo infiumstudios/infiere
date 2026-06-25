@@ -30,6 +30,8 @@ export type NavKey =
   | "agents"
   | "settings";
 
+import "../../Scrollbar.css"
+
 interface NavItem {
   key: NavKey;
   label: string;

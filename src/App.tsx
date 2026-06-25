@@ -10,6 +10,7 @@ import PromptBuilderView from "./pages/PromptBuilderView";
 import ModelsView from "./pages/ModelsView";
 import ArtifactsView from "./pages/ArtifactsView";
 
+
 const PLACEHOLDER_LABEL: Record<string, string> = {
   "knowledge-base": "Knowledge Base",
   compare: "Compare",
