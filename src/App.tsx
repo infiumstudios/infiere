@@ -7,9 +7,10 @@ import ProjectsView from "./pages/ProjectsView";
 import ProjectDetailView from "./pages/ProjectDetailView";
 import ChatThreadView from "./pages/ChatThreadView";
 import PromptBuilderView from "./pages/PromptBuilderView";
+import ModelsView from "./pages/ModelsView";
+import ArtifactsView from "./pages/ArtifactsView";
 
 const PLACEHOLDER_LABEL: Record<string, string> = {
-  artifacts: "Artifacts",
   "knowledge-base": "Knowledge Base",
   compare: "Compare",
   "plugin-marketplace": "Plugin Marketplace",
@@ -70,6 +71,10 @@ export default function App() {
         return <ProjectsView onOpenProject={openProject} />;
       case "prompt-builder":
         return <PromptBuilderView />;
+      case "models":
+        return <ModelsView />;
+      case "artifacts":
+        return <ArtifactsView />;
       default:
         return <PlaceholderView label={PLACEHOLDER_LABEL[active] ?? "This section"} />;
     }
