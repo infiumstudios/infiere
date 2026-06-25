@@ -4,9 +4,9 @@ import Sidebar, { type NavKey } from "./components/sidebar/Sidebar";
 import NewChatView from "./pages/NewChatView";
 import ChatsView from "./pages/ChatsView";
 import ProjectsView from "./pages/ProjectsView";
-import ProjectDetailView from "./ProjectDetailView";
-import ChatThreadView from "./ChatThreadView";
-import PromptBuilderView from "./PromptBuilderView";
+import ProjectDetailView from "./pages/ProjectDetailView";
+import ChatThreadView from "./pages/ChatThreadView";
+import PromptBuilderView from "./pages/PromptBuilderView";
 
 const PLACEHOLDER_LABEL: Record<string, string> = {
   artifacts: "Artifacts",
