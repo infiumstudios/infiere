@@ -14,6 +14,7 @@ import {
   Wand2,
   Store,
   Bot,
+  Cpu,
 } from "lucide-react";
 
 export type NavKey =
@@ -23,6 +24,7 @@ export type NavKey =
   | "artifacts"
   | "knowledge-base"
   | "compare"
+  | "models"
   | "prompt-builder"
   | "plugin-marketplace"
   | "agents"
@@ -42,6 +44,7 @@ const NAV_ITEMS: NavItem[] = [
   { key: "artifacts", label: "Artifacts", icon: Layers },
   { key: "knowledge-base", label: "Knowledge Base", icon: BookOpen },
   { key: "compare", label: "Compare", icon: GitCompare },
+  { key: "models", label: "Models", icon: Cpu },
   { key: "prompt-builder", label: "Prompt Builder", icon: Wand2 },
   { key: "plugin-marketplace", label: "Plugin Marketplace", icon: Store },
   { key: "agents", label: "Agents", icon: Bot },
