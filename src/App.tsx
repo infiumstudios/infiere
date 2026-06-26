@@ -9,13 +9,10 @@ import ChatThreadView from "./pages/ChatThreadView";
 import PromptBuilderView from "./pages/PromptBuilderView";
 import ModelsView from "./pages/ModelsView";
 import ArtifactsView from "./pages/ArtifactsView";
-
+import KnowledgeBaseFeature from "./pages/KnowledgeBaseFeature";
+import CompareView from "./pages/CompareView";
 
 const PLACEHOLDER_LABEL: Record<string, string> = {
-  "knowledge-base": "Knowledge Base",
-  compare: "Compare",
-  "plugin-marketplace": "Plugin Marketplace",
-  agents: "Agents",
   settings: "Settings",
 };
 
@@ -76,6 +73,10 @@ export default function App() {
         return <ModelsView />;
       case "artifacts":
         return <ArtifactsView />;
+      case "knowledge-base":
+        return <KnowledgeBaseFeature />;
+      case "compare":
+        return <CompareView />;
       default:
         return <PlaceholderView label={PLACEHOLDER_LABEL[active] ?? "This section"} />;
     }
