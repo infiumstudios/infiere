@@ -12,8 +12,6 @@ import {
   Sparkles,
   ChevronDown,
   Wand2,
-  Store,
-  Bot,
   Cpu,
 } from "lucide-react";
 
@@ -26,11 +24,7 @@ export type NavKey =
   | "compare"
   | "models"
   | "prompt-builder"
-  | "plugin-marketplace"
-  | "agents"
   | "settings";
-
-import "../../Scrollbar.css"
 
 interface NavItem {
   key: NavKey;
@@ -38,18 +32,21 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
+import "../../Scrollbar.css"
+
 const PRIMARY_ITEMS: NavItem[] = [{ key: "new-chat", label: "New chat", icon: SquarePen }];
 
-const NAV_ITEMS: NavItem[] = [
+const MAIN_NAV_ITEMS: NavItem[] = [
   { key: "chats", label: "Chats", icon: MessageSquare },
   { key: "projects", label: "Projects", icon: FolderKanban },
   { key: "artifacts", label: "Artifacts", icon: Layers },
+];
+
+const OTHER_NAV_ITEMS: NavItem[] = [
   { key: "knowledge-base", label: "Knowledge Base", icon: BookOpen },
   { key: "compare", label: "Compare", icon: GitCompare },
   { key: "models", label: "Models", icon: Cpu },
   { key: "prompt-builder", label: "Prompt Builder", icon: Wand2 },
-  { key: "plugin-marketplace", label: "Plugin Marketplace", icon: Store },
-  { key: "agents", label: "Agents", icon: Bot },
 ];
 
 export interface RecentChat {
@@ -71,9 +68,41 @@ interface SidebarProps {
   onOpenChat: (chatId: string) => void;
 }
 
+function NavButton({
+  item,
+  isActive,
+  collapsed,
+  onClick,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  collapsed: boolean;
+  onClick: () => void;
+}) {
+  const Icon = item.icon;
+  return (
+    <button
+      onClick={onClick}
+      className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] transition ${
+        isActive ? "bg-violet-500/15 text-white" : "text-white/55 hover:bg-white/[0.05] hover:text-white/85"
+      } ${collapsed ? "justify-center" : ""}`}
+      title={collapsed ? item.label : undefined}
+    >
+      <Icon size={16} className={`shrink-0 ${isActive ? "text-violet-300" : "text-white/40"}`} />
+      {!collapsed && <span className="truncate">{item.label}</span>}
+      {isActive && !collapsed && (
+        <span className="ml-auto h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
+      )}
+    </button>
+  );
+}
+
 export default function Sidebar({ active, activeChatId, onNavigate, onOpenChat }: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [recentOpen, setRecentOpen] = useState(true);
+  const [otherOpen, setOtherOpen] = useState(
+    OTHER_NAV_ITEMS.some((item) => item.key === active)
+  );
 
   return (
     <aside
@@ -120,29 +149,51 @@ export default function Sidebar({ active, activeChatId, onNavigate, onOpenChat }
         })}
       </div>
 
-      {/* Scrollable middle: nav + recent chats */}
+      {/* Scrollable middle: nav + other + recent chats */}
       <nav className="relative z-10 mt-6 flex-1 space-y-0.5 overflow-y-auto px-3">
         {!collapsed && <p className="px-2 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-white/30">Features</p>}
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const isActive = active === item.key;
-          return (
-            <button
-              key={item.key}
-              onClick={() => onNavigate(item.key)}
-              className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] transition ${
-                isActive ? "bg-violet-500/15 text-white" : "text-white/55 hover:bg-white/[0.05] hover:text-white/85"
-              } ${collapsed ? "justify-center" : ""}`}
-              title={collapsed ? item.label : undefined}
-            >
-              <Icon size={16} className={`shrink-0 ${isActive ? "text-violet-300" : "text-white/40"}`} />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-              {isActive && !collapsed && (
-                <span className="ml-auto h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
-              )}
-            </button>
-          );
-        })}
+        {MAIN_NAV_ITEMS.map((item) => (
+          <NavButton
+            key={item.key}
+            item={item}
+            isActive={active === item.key}
+            collapsed={collapsed}
+            onClick={() => onNavigate(item.key)}
+          />
+        ))}
+
+        {/* Other, collapsible group */}
+        <div className="mt-1">
+          <button
+            onClick={() => setOtherOpen((o) => !o)}
+            className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] transition ${
+              collapsed ? "justify-center" : ""
+            } text-white/55 hover:bg-white/[0.05] hover:text-white/85`}
+            title={collapsed ? "Other" : undefined}
+          >
+            <ChevronDown
+              size={15}
+              className={`shrink-0 text-white/35 transition ${otherOpen ? "" : "-rotate-90"}`}
+            />
+            {!collapsed && <span className="truncate">Other</span>}
+            {!collapsed && OTHER_NAV_ITEMS.some((i) => i.key === active) && (
+              <span className="ml-auto h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
+            )}
+          </button>
+          {otherOpen && (
+            <div className={`mt-0.5 space-y-0.5 ${collapsed ? "" : "pl-3"}`}>
+              {OTHER_NAV_ITEMS.map((item) => (
+                <NavButton
+                  key={item.key}
+                  item={item}
+                  isActive={active === item.key}
+                  collapsed={collapsed}
+                  onClick={() => onNavigate(item.key)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Recent chats, collapsible */}
         {!collapsed && (
@@ -193,3 +244,6 @@ export default function Sidebar({ active, activeChatId, onNavigate, onOpenChat }
     </aside>
   );
 }
+
+
+
