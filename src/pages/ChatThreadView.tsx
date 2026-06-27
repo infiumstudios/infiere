@@ -1,29 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowLeft, PanelRightOpen, PanelRightClose, Paperclip, ArrowUp, Sparkles } from "lucide-react";
 import ContextInspectorPanel, { type ContextItem } from "./ContextInspectorPanel";
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
 }
-
-const MESSAGES: Message[] = [
-  { id: "m1", role: "user", content: "Can you summarize the key points from thesis.pdf?" },
-  {
-    id: "m2",
-    role: "assistant",
-    content:
-      "Here's a summary of the thesis: it argues that collapsible navigation reduces cognitive load on dense dashboards, backed by a small usability study across 12 participants.",
-  },
-  { id: "m3", role: "user", content: "Good — turn that into three bullet points for the README." },
-];
-
-const INITIAL_CONTEXT: ContextItem[] = [
-  { id: "c1", name: "thesis.pdf", type: "pdf", tokens: 4820 },
-  { id: "c2", name: "notes.md", type: "note", tokens: 612 },
-  { id: "c3", name: "moodboard.png", type: "image", tokens: 1100 },
-];
 
 interface ChatThreadViewProps {
   chatId: string;
@@ -34,6 +19,77 @@ export default function ChatThreadView({ chatId, onBack }: ChatThreadViewProps) 
   const [contextOpen, setContextOpen] = useState(true);
   const [contextItems, setContextItems] = useState<ContextItem[]>(INITIAL_CONTEXT);
   const [draft, setDraft] = useState("");
+  const [messages, setMessages] = useState<Message[]>(MESSAGES);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const currentAssistantMessageRef = useRef<string>("");
+
+  // Streaming listeners
+  useEffect(() => {
+    const unlistenStream = listen<string>('chat-stream', (event) => {
+      currentAssistantMessageRef.current += event.payload;
+      
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant") {
+          return [...prev.slice(0, -1), { ...last, content: currentAssistantMessageRef.current }];
+        }
+        return prev;
+      });
+    });
+
+    const unlistenEnd = listen<string>('chat-stream-end', () => {
+      currentAssistantMessageRef.current = "";
+      setIsLoading(false);
+    });
+
+    return () => {
+      unlistenStream.then(fn => fn());
+      unlistenEnd.then(fn => fn());
+    };
+  }, []);
+
+  const sendMessage = async () => {
+    if (!draft.trim() || isLoading) return;
+
+    const userMessage: Message = {
+      id: `u-${Date.now()}`,
+      role: "user",
+      content: draft.trim()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    const currentDraft = draft.trim();
+    setDraft("");
+    setIsLoading(true);
+    currentAssistantMessageRef.current = "";
+
+    // Add empty assistant message placeholder
+    const assistantId = `a-${Date.now()}`;
+    setMessages(prev => [...prev, {
+      id: assistantId,
+      role: "assistant",
+      content: ""
+    }]);
+
+    try {
+      await invoke('send_message', {
+        window: null, // Tauri will inject current window
+        payload: {
+          chat_id: chatId,
+          message: currentDraft,
+          model: "llama3.2",           // ← Change this to your model
+          history: messages.concat(userMessage).map(m => ({
+            role: m.role,
+            content: m.content
+          }))
+        }
+      });
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      setIsLoading(false);
+    }
+  };
 
   const removeContextItem = (id: string) => {
     setContextItems((items) => items.filter((item) => item.id !== id));
@@ -44,10 +100,7 @@ export default function ChatThreadView({ chatId, onBack }: ChatThreadViewProps) 
       <div className="flex flex-1 flex-col bg-[#150a24]">
         {/* header */}
         <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
-          <button
-            onClick={onBack}
-            className="flex items-center gap-1.5 text-[13px] text-white/45 transition hover:text-white/80"
-          >
+          <button onClick={onBack} className="flex items-center gap-1.5 text-[13px] text-white/45 transition hover:text-white/80">
             <ArrowLeft size={14} />
             Back
           </button>
@@ -55,9 +108,7 @@ export default function ChatThreadView({ chatId, onBack }: ChatThreadViewProps) 
           <button
             onClick={() => setContextOpen((o) => !o)}
             className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[12.5px] transition ${
-              contextOpen
-                ? "border-violet-400/40 bg-violet-500/15 text-white"
-                : "border-white/10 bg-white/[0.04] text-white/55 hover:bg-white/[0.07]"
+              contextOpen ? "border-violet-400/40 bg-violet-500/15 text-white" : "border-white/10 bg-white/[0.04] text-white/55 hover:bg-white/[0.07]"
             }`}
           >
             {contextOpen ? <PanelRightClose size={14} /> : <PanelRightOpen size={14} />}
@@ -68,7 +119,7 @@ export default function ChatThreadView({ chatId, onBack }: ChatThreadViewProps) 
         {/* messages */}
         <div className="flex-1 overflow-y-auto px-6 py-6">
           <div className="mx-auto max-w-2xl space-y-5">
-            {MESSAGES.map((message) => (
+            {messages.map((message) => (
               <div
                 key={message.id}
                 className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
@@ -81,6 +132,9 @@ export default function ChatThreadView({ chatId, onBack }: ChatThreadViewProps) 
                   }`}
                 >
                   {message.content}
+                  {message.role === "assistant" && isLoading && message.content === "" && (
+                    <span className="animate-pulse">...</span>
+                  )}
                 </div>
               </div>
             ))}
@@ -95,6 +149,12 @@ export default function ChatThreadView({ chatId, onBack }: ChatThreadViewProps) 
               <textarea
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                  }
+                }}
                 placeholder="Reply…"
                 rows={1}
                 className="max-h-32 w-full resize-none bg-transparent text-[14px] text-white/85 placeholder:text-white/35 focus:outline-none"
@@ -106,7 +166,8 @@ export default function ChatThreadView({ chatId, onBack }: ChatThreadViewProps) 
                 Attach
               </button>
               <button
-                disabled={!draft.trim()}
+                onClick={sendMessage}
+                disabled={!draft.trim() || isLoading}
                 className="rounded-full bg-violet-600 p-2 text-white shadow-[0_0_16px_rgba(124,58,237,0.6)] transition hover:bg-violet-500 disabled:opacity-40 disabled:shadow-none"
               >
                 <ArrowUp size={15} />
@@ -126,3 +187,7 @@ export default function ChatThreadView({ chatId, onBack }: ChatThreadViewProps) 
     </div>
   );
 }
+
+// Keep your constants at the bottom
+const MESSAGES: Message[] = [ /* ... your sample messages */ ];
+const INITIAL_CONTEXT: ContextItem[] = [ /* ... */ ];

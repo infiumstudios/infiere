@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ImageIcon,
   Lightbulb,
@@ -11,11 +11,34 @@ import {
   Sparkles,
 } from "lucide-react";
 
+import { invoke } from '@tauri-apps/api/core';
+import { listen } from '@tauri-apps/api/event';
+
 const QUICK_ACTIONS = [
   { label: "Create image", icon: ImageIcon },
   { label: "Brainstorm", icon: Lightbulb },
   { label: "Make a plan", icon: FileText },
 ];
+
+const testChat = async () => {
+  const history = [
+    { role: "user", content: "Hello, who are you?" }
+  ];
+
+  try {
+    const response = await invoke<string>('send_message', {
+      payload: {
+        chat_id: "test-1",
+        message: "Hello, who are you?",
+        model: "llama3.2",        // change to a model you have
+        history
+      }
+    });
+    console.log("Ollama response:", response);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
 
 export default function NewChatView() {
   const [prompt, setPrompt] = useState("");
@@ -89,6 +112,7 @@ export default function NewChatView() {
                 </button>
                 <button
                   disabled={!prompt.trim()}
+                  onClick={testChat} 
                   className="rounded-full bg-violet-600 p-2 text-white shadow-[0_0_16px_rgba(124,58,237,0.6)] transition hover:bg-violet-500 disabled:opacity-40 disabled:shadow-none"
                 >
                   <ArrowUp size={16} />
