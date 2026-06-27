@@ -32,9 +32,9 @@ interface NavItem {
   icon: React.ComponentType<{ size?: number; className?: string }>;
 }
 
-import "../../Scrollbar.css"
-
-const PRIMARY_ITEMS: NavItem[] = [{ key: "new-chat", label: "New chat", icon: SquarePen }];
+const PRIMARY_ITEMS: NavItem[] = [
+  { key: "new-chat", label: "New chat", icon: SquarePen },
+];
 
 const MAIN_NAV_ITEMS: NavItem[] = [
   { key: "chats", label: "Chats", icon: MessageSquare },
@@ -54,16 +54,10 @@ export interface RecentChat {
   title: string;
 }
 
-const RECENT_CHATS: RecentChat[] = [
-  { id: "1", title: "Sidebar navigation patterns" },
-  { id: "2", title: "Gradient accent for dark UI" },
-  { id: "3", title: "Onboarding flow copy" },
-  { id: "4", title: "Compare mode wireframe" },
-];
-
 interface SidebarProps {
   active: NavKey;
   activeChatId?: string | null;
+  recentChats: RecentChat[];
   onNavigate: (key: NavKey) => void;
   onOpenChat: (chatId: string) => void;
 }
@@ -84,11 +78,16 @@ function NavButton({
     <button
       onClick={onClick}
       className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] transition ${
-        isActive ? "bg-violet-500/15 text-white" : "text-white/55 hover:bg-white/[0.05] hover:text-white/85"
+        isActive
+          ? "bg-violet-500/15 text-white"
+          : "text-white/55 hover:bg-white/[0.05] hover:text-white/85"
       } ${collapsed ? "justify-center" : ""}`}
       title={collapsed ? item.label : undefined}
     >
-      <Icon size={16} className={`shrink-0 ${isActive ? "text-violet-300" : "text-white/40"}`} />
+      <Icon
+        size={16}
+        className={`shrink-0 ${isActive ? "text-violet-300" : "text-white/40"}`}
+      />
       {!collapsed && <span className="truncate">{item.label}</span>}
       {isActive && !collapsed && (
         <span className="ml-auto h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_8px_rgba(167,139,250,0.8)]" />
@@ -97,11 +96,17 @@ function NavButton({
   );
 }
 
-export default function Sidebar({ active, activeChatId, onNavigate, onOpenChat }: SidebarProps) {
+export default function Sidebar({
+  active,
+  activeChatId,
+  recentChats,
+  onNavigate,
+  onOpenChat,
+}: SidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [recentOpen, setRecentOpen] = useState(true);
   const [otherOpen, setOtherOpen] = useState(
-    OTHER_NAV_ITEMS.some((item) => item.key === active)
+    OTHER_NAV_ITEMS.some((item) => item.key === active),
   );
 
   return (
@@ -118,14 +123,22 @@ export default function Sidebar({ active, activeChatId, onNavigate, onOpenChat }
           <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-700 shadow-[0_0_18px_rgba(168,85,247,0.55)]">
             <Sparkles size={14} className="text-white" />
           </div>
-          {!collapsed && <span className="truncate font-serif text-[17px] tracking-wide text-white/90">Infiere</span>}
+          {!collapsed && (
+            <span className="truncate font-serif text-[17px] tracking-wide text-white/90">
+              Infiere
+            </span>
+          )}
         </div>
         <button
           onClick={() => setCollapsed((c) => !c)}
           className="rounded-md p-1.5 text-white/40 transition hover:bg-white/[0.06] hover:text-white/80"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
-          {collapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          {collapsed ? (
+            <PanelLeftOpen size={16} />
+          ) : (
+            <PanelLeftClose size={16} />
+          )}
         </button>
       </div>
 
@@ -151,7 +164,11 @@ export default function Sidebar({ active, activeChatId, onNavigate, onOpenChat }
 
       {/* Scrollable middle: nav + other + recent chats */}
       <nav className="relative z-10 mt-6 flex-1 space-y-0.5 overflow-y-auto px-3">
-        {!collapsed && <p className="px-2 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-white/30">Features</p>}
+        {!collapsed && (
+          <p className="px-2 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-white/30">
+            Features
+          </p>
+        )}
         {MAIN_NAV_ITEMS.map((item) => (
           <NavButton
             key={item.key}
@@ -203,18 +220,28 @@ export default function Sidebar({ active, activeChatId, onNavigate, onOpenChat }
               className="flex w-full items-center justify-between px-2 pb-1.5 text-[11px] font-medium uppercase tracking-wider text-white/30 transition hover:text-white/55"
             >
               Recent chats
-              <ChevronDown size={13} className={`transition ${recentOpen ? "" : "-rotate-90"}`} />
+              <ChevronDown
+                size={13}
+                className={`transition ${recentOpen ? "" : "-rotate-90"}`}
+              />
             </button>
             {recentOpen && (
               <div className="space-y-0.5">
-                {RECENT_CHATS.map((chat) => {
+                {recentChats.length === 0 && (
+                  <p className="px-2.5 py-1.5 text-[12px] text-white/30">
+                    No chats yet.
+                  </p>
+                )}
+                {recentChats.map((chat) => {
                   const isActive = activeChatId === chat.id;
                   return (
                     <button
                       key={chat.id}
                       onClick={() => onOpenChat(chat.id)}
                       className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-[13px] transition ${
-                        isActive ? "bg-violet-500/15 text-white" : "text-white/45 hover:bg-white/[0.05] hover:text-white/80"
+                        isActive
+                          ? "bg-violet-500/15 text-white"
+                          : "text-white/45 hover:bg-white/[0.05] hover:text-white/80"
                       }`}
                     >
                       <span className="h-1 w-1 shrink-0 rounded-full bg-white/30" />
@@ -233,17 +260,19 @@ export default function Sidebar({ active, activeChatId, onNavigate, onOpenChat }
         <button
           onClick={() => onNavigate("settings")}
           className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13.5px] transition ${
-            active === "settings" ? "bg-violet-500/15 text-white" : "text-white/55 hover:bg-white/[0.05] hover:text-white/85"
+            active === "settings"
+              ? "bg-violet-500/15 text-white"
+              : "text-white/55 hover:bg-white/[0.05] hover:text-white/85"
           } ${collapsed ? "justify-center" : ""}`}
           title={collapsed ? "Settings" : undefined}
         >
-          <Settings size={16} className={`shrink-0 ${active === "settings" ? "text-violet-300" : "text-white/40"}`} />
+          <Settings
+            size={16}
+            className={`shrink-0 ${active === "settings" ? "text-violet-300" : "text-white/40"}`}
+          />
           {!collapsed && <span className="truncate">Settings</span>}
         </button>
       </div>
     </aside>
   );
 }
-
-
-

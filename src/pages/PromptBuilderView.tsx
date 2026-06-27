@@ -40,6 +40,8 @@ const EMPTY_FORM: FormState = {
   extras: [],
 };
 
+const EMPTY_PROMPT_PLACEHOLDER = "Fill in the fields to generate your prompt.";
+
 function buildPrompt(form: FormState): string {
   const lines: string[] = [];
   if (form.persona) lines.push(`You are acting as a ${form.persona.toLowerCase()}.`);
@@ -51,7 +53,7 @@ function buildPrompt(form: FormState): string {
   if (form.tone) lines.push(`Tone: ${form.tone}.`);
   if (form.depth) lines.push(`Reasoning depth: ${form.depth}.`);
   if (form.extras.length) lines.push(`\nAdditionally: ${form.extras.join(", ").toLowerCase()}.`);
-  return lines.join("\n") || "Fill in the fields to generate your prompt.";
+  return lines.join("\n") || EMPTY_PROMPT_PLACEHOLDER;
 }
 
 function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
@@ -94,7 +96,12 @@ function ChipGroup({
 const textareaClass =
   "w-full resize-none rounded-xl border border-white/10 bg-white/[0.04] px-3.5 py-2.5 text-[13.5px] text-white/85 placeholder:text-white/30 focus:border-violet-400/40 focus:outline-none";
 
-export default function PromptBuilderView() {
+interface PromptBuilderViewProps {
+  /** Hands the final prompt text to a fresh chat (switches to New Chat, prefilled). */
+  onUseInChat?: (prompt: string) => void;
+}
+
+export default function PromptBuilderView({ onUseInChat }: PromptBuilderViewProps) {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [copied, setCopied] = useState(false);
   const [editedPrompt, setEditedPrompt] = useState<string | null>(null);
@@ -246,6 +253,16 @@ export default function PromptBuilderView() {
             placeholder="Your structured prompt appears here as you fill in the form. Edit it freely before copying."
             className="flex-1 resize-none rounded-xl border border-white/10 bg-white/[0.03] p-4 text-[13px] leading-relaxed text-white/85 placeholder:text-white/30 focus:border-violet-400/40 focus:outline-none"
           />
+          {onUseInChat && (
+            <button
+              onClick={() => onUseInChat(prompt)}
+              disabled={!prompt.trim() || prompt === EMPTY_PROMPT_PLACEHOLDER}
+              className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-violet-600 py-2.5 text-[13px] font-medium text-white shadow-[0_0_16px_rgba(124,58,237,0.5)] transition hover:bg-violet-500 disabled:opacity-40 disabled:shadow-none"
+            >
+              <Sparkles size={14} />
+              Use in new chat
+            </button>
+          )}
         </aside>
       </div>
     </div>
